@@ -16,11 +16,11 @@
 |    [Deep Interest Evolution Network](#DIEN)     | [AAAI 2019][Deep Interest Evolution Network for Click-Through Rate Prediction](https://arxiv.org/pdf/1809.03672.pdf)                                            |
 |                [AutoInt](#AutoInt)                 | [CIKM 2019][AutoInt: Automatic Feature Interaction Learning via Self-Attentive Neural Networks](https://arxiv.org/abs/1810.11921)                              |
 |                  [ONN](#ONN)                   | [arxiv 2019][Operation-aware Neural Networks for User Response Prediction](https://arxiv.org/pdf/1904.12579.pdf)                                                |
-|                FiBiNET                 | [RecSys 2019][FiBiNET: Combining Feature Importance and Bilinear feature Interaction for Click-Through Rate Prediction](https://arxiv.org/pdf/1905.09433.pdf)   |
-|                IFM                 | [IJCAI 2019][An Input-aware Factorization Machine for Sparse Prediction](https://www.ijcai.org/Proceedings/2019/0203.pdf)   |
-|                DCN V2                    | [arxiv 2020][DCN V2: Improved Deep & Cross Network and Practical Lessons for Web-scale Learning to Rank Systems](https://arxiv.org/abs/2008.13535)   |
-|                DIFM                 | [IJCAI 2020][A Dual Input-aware Factorization Machine for CTR Prediction](https://www.ijcai.org/Proceedings/2020/0434.pdf)   |
-|                AFN                 | [AAAI 2020][Adaptive Factorization Network: Learning Adaptive-Order Feature Interactions](https://arxiv.org/pdf/1909.03276)   |
+|                [FiBiNET](#FiBiNET)                 | [RecSys 2019][FiBiNET: Combining Feature Importance and Bilinear feature Interaction for Click-Through Rate Prediction](https://arxiv.org/pdf/1905.09433.pdf)   |
+|                [IFM](#IFM)                 | [IJCAI 2019][An Input-aware Factorization Machine for Sparse Prediction](https://www.ijcai.org/Proceedings/2019/0203.pdf)   |
+|                [DCN V2](#DCN-V2)                    | [arxiv 2020][DCN V2: Improved Deep & Cross Network and Practical Lessons for Web-scale Learning to Rank Systems](https://arxiv.org/abs/2008.13535)   |
+|                [DIFM](#DIFM)                 | [IJCAI 2020][A Dual Input-aware Factorization Machine for CTR Prediction](https://www.ijcai.org/Proceedings/2020/0434.pdf)   |
+|                [AFN](#AFN)                 | [AAAI 2020][Adaptive Factorization Network: Learning Adaptive-Order Feature Interactions](https://arxiv.org/pdf/1909.03276)   |
 
 ## CCPM
 
@@ -248,3 +248,111 @@ DIEN从两方面进行了改进：
 这个框架默认field都是离散变量（因为连续也可以转化成离散），这样一定是有一定信息损失的。
 
 另外，对不同的operation需要有不同embedding的设计，这个是需要实验尝试的，当然也可以都设成一样的维度，但是这样似乎这种方法没太大意义了。
+
+## FiBiNET
+
+新浪微博Feature Importance and Bilinear feature Interaction NETwork(FiBiNET)
+
+* motivation
+
+现有方法大多用内积、hadamard积来计算交叉特征，没有给重要特征额外关注
+
+* method
+
+![fibinet](figs/FiBiNET.png)
+
+关于其中的组件，说以下两个：
+
+1. SENET Layer,来源于“Squeeze-and-Excitation Network” (SENET),是前人提出的机制，通过对不同channel的特征的交叉效应建模，增强网络的表示能力。SENET Layer有三个部分：squeeze（mean pooling，提取不同filed embedding的‘summary’）、Excitation（经过两层FC和激活函数，计算出field embedding的权重）、re-weight（利用上一步的权重和原始embedding计算，得出最终的输出）
+
+![fibinet-SENET](figs/FiBiNET-SENET.png)
+
+2. Bilinear-Interaction Layer，实质就是把两种乘积结合
+
+![fibinet-bilinear](figs/FiBiNET-bilinear.png)
+
+
+## IFM
+
+Input-aware Factorization Machine (IFM)
+
+* motivation
+
+对于不同的instance，相同的feature应有不同的权重。比如female在购物中影响较高，但是在学校就不那么重要。
+
+* method
+
+![ifm](figs/IFM.png)
+
+Factor Estimating Network，其实就是把embedding通过全连接后softmax。
+![ifm-fenet](figs/IFM-FENet.png)
+
+然后在reweighting layer，embedding的权重与上一步的得分做内积，再与embedding做内积。得到重要性不同的embdding。最后走FM的流程。
+
+* thoughts
+
+这怎么对input有explicit的区分了？感觉就是讲故事。
+
+## DCN-V2
+
+* motivation
+
+对DCN进行改进，使之能够用于大规模数据场景下
+
+* method
+
+![DCN](figs/DCN-V2.png)
+
+* thoughts
+
+在related work对之前的许多方法进行归纳，可以读读
+
+## DIFM
+
+Dual Input- aware Factorization Machines (DIFMs)
+
+* motivation
+
+对IFM进一步改进
+
+* method
+
+> Dual Input- aware Factorization Machines (DIFMs) that can adaptively reweight the original feature representations at the bit-wise and vector-wise levels simultaneously. Furthermore, DIFMs strategically integrate various components including Multi-Head Self-Attention, Residual Networks and DNNs into a unified end-to-end model.
+
+概括为两点：1.同时bit-wise（IFM有）+vector-wise（实质是用attention的得分作为权重）的reweight；2.在其中增加了其他结构，比如multihead selfattention，残差网络
+
+![DIFM](figs/DIFM.png)
+
+![DIFM-vector](figs/DIFM-vector.png)
+
+![DIFM-bit](figs/DIFM-bit.png)
+
+
+* thoughts
+
+画了个漂亮的multihead selfattention的图。实质就是增加了attention的得分。
+
+## AFN
+
+Adaptive Factorization Network (AFN)
+
+* motivation
+
+FM存在drawback：1）按照制定的不断计算高阶cross feature和计算成本的trade off；2）无关特征也计算cross feature会引入噪声。
+
+AFN 则是打破FM制定的规则，**自适应地** 组合 **任意阶数**的cross feature
+> learns **arbitrary-order** cross features **adaptively** from data.The core of AFN is a logarithmic transformation layer that converts the power of each feature in a feature combination into the coefficient to be learned.
+
+* method
+
+![lnn](figs/AFN-log.png)
+
+lnn引入乘除指数操作，这正是mlp缺乏的
+> The idea of LNN is to transform input into the logarithmic space, which converts multiplication to addition, division to subtraction, and powers to multiplication by a constant.
+
+![afn](figs/AFN.png)
+
+* thoughts
+
+应该是第一个把LNN用到DL模型的，这个结构很有意思，非线性性强，以后可尝试。
+此外，lnn这种结构应有更多的改进和应用空间。
