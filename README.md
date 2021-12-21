@@ -46,7 +46,7 @@
 
 DNN + 利用三种特征转换方法，即分解机（FMS），限制的Boltzmann机（RBMS）和去噪自动编码器（DAEs)
 
-【上述方法都不了解，暂时搁置这篇paper】
+【暂时搁置这篇paper】
 
 * thoughts
 
